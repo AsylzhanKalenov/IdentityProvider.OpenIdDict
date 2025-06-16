@@ -1,0 +1,98 @@
+.admin-header {
+    background-color: #f8f9fa;
+    padding: 1.5rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table-actions {
+    white-space: nowrap;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* Client management specific */
+.client-card {
+    border-left: 4px solid var(--primary-color);
+}
+
+.permission-badge {
+    font-size: 0.75rem;
+    margin: 0.125rem;
+}
+
+/* Form validation styles */
+.field-validation-error {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.field-validation-valid {
+    display: none;
+}
+
+.input-validation-error {
+    border-color: #dc3545;
+}
+
+.validation-summary-errors {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+}
+
+.validation-summary-errors ul {
+    margin-bottom: 0;
+    padding-left: 1.25rem;
+}
+
+.validation-summary-valid {
+    display: none;
+}
+
+/* Responsive utilities */
+@media (max-width: 576px) {
+    .social-btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem 0.5rem 3rem;
+    }
+
+    .social-btn i {
+        left: 1rem;
+        font-size: 1rem;
+    }
+
+    .auth-container {
+        padding: 1.5rem;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bs-body-bg: #212529;
+        --bs-body-color: #dee2e6;
+    }
+
+    .card {
+        background-color: #343a40;
+        color: #dee2e6;
+    }
+
+    .auth-container {
+        background-color: #343a40;
+        color: #dee2e6;
+    }
+
+    code {
+        background-color: #495057;
+        color: #e9ecef;
+    }
+}

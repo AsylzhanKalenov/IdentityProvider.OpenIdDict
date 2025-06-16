@@ -1,0 +1,114 @@
+@model LendMe.Idp.Models.AuthorizeViewModel
+@{
+    ViewData["Title"] = "Authorization Request";
+    Layout = null; // Special layout for auth pages
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Identity Provider</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .consent-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="consent-container">
+                    <div class="card border-0">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="mb-0">Authorization Request</h3>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="text-center mb-4">
+                                <i class="bi bi-shield-lock" style="font-size: 3rem; color: #667eea;"></i>
+                            </div>
+                            <p class="lead text-center">
+                                <strong>@Model.ApplicationName</strong> is requesting access to your account
+                            </p>
+                            
+                            <h5 class="mt-4">This application will be able to:</h5>
+                            <ul class="list-unstyled">
+                                @foreach (var scope in Model.Scope.Split(' '))
+                                {
+                                    <li class="mb-2">
+                                        @switch (scope)
+                                        {
+                                            case "openid":
+                                                <i class="bi bi-person-check text-success">Sign you in and read your user identifier</i> 
+                                                break;
+                                            case "profile":
+                                                <i class="bi bi-person text-info">Read your profile information (name, etc.)</i> 
+                                                break;
+                                            case "email":
+                                                <i class="bi bi-envelope text-warning">Read your email address</i> 
+                                                break;
+                                            case "phone":
+                                                <i class="bi bi-telephone text-primary">Read your phone number</i> 
+                                                break;
+                                            case "address":
+                                                <i class="bi bi-geo-alt text-danger">Read your address information</i> 
+                                                break;
+                                            case "roles":
+                                                <i class="bi bi-shield-check text-secondary">Read your assigned roles</i> 
+                                                break;
+                                            case "offline_access":
+                                                <i class="bi bi-arrow-repeat text-dark">Access your data when you're not present</i> 
+                                                break;
+                                            case "api":
+                                                <i class="bi bi-server text-primary">Access the API on your behalf</i> 
+                                                break;
+                                            default:
+                                                <i class="bi bi-key text-muted">@scope</i> 
+                                                break;
+                                        }
+                                    </li>
+                                }
+                            </ul>
+
+                            <form asp-action="Authorize" method="post" class="mt-4">
+                                <input type="hidden" name="client_id" value="@Model.ClientId" />
+                                <input type="hidden" name="redirect_uri" value="@Model.RedirectUri" />
+                                <input type="hidden" name="response_type" value="@Model.ResponseType" />
+                                <input type="hidden" name="scope" value="@Model.Scope" />
+                                <input type="hidden" name="state" value="@Model.State" />
+                                <input type="hidden" name="code_challenge" value="@Model.CodeChallenge" />
+                                <input type="hidden" name="code_challenge_method" value="@Model.CodeChallengeMethod" />
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" name="submit" value="Accept" class="btn btn-success btn-lg">
+                                        <i class="bi bi-check-circle"></i> Allow Access
+                                    </button>
+                                    <button type="submit" name="submit" value="Deny" class="btn btn-outline-danger">
+                                        <i class="bi bi-x-circle"></i> Deny Access
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <p class="text-muted text-center mt-3 mb-0">
+                                <small>You can revoke this authorization at any time in your account settings.</small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

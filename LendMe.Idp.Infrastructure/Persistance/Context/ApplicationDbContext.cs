@@ -15,7 +15,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(builder);
 
-        // Настройка OpenIddict entities
-        builder.UseOpenIddict();
+        // Customize the ASP.NET Identity model and override the defaults if needed
+        builder.Entity<ApplicationUser>(entity =>
+        {
+            entity.Property(e => e.FirstName).HasMaxLength(100);
+            entity.Property(e => e.LastName).HasMaxLength(100);
+            entity.Ignore(u => u.CustomClaims);
+        });
     }
 }

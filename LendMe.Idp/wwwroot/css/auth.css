@@ -1,0 +1,87 @@
+.auth-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 2rem;
+}
+
+.login-container,
+.register-container {
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+/* Social login buttons */
+.social-btn {
+    position: relative;
+    padding: 0.75rem 1rem 0.75rem 3.5rem;
+    margin-bottom: 0.5rem;
+    width: 100%;
+    text-align: left;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-width: 2px;
+    overflow: hidden;
+}
+
+.social-btn i {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.25rem;
+    transition: color 0.3s ease;
+}
+
+/* Google Button */
+.social-btn-google {
+    color: var(--google-color);
+    border-color: var(--google-color);
+    background-color: white;
+}
+
+.social-btn-google:hover {
+    background-color: var(--google-color);
+    color: white;
+    border-color: var(--google-color);
+}
+
+/* Facebook Button */
+.social-btn-facebook {
+    color: var(--facebook-color);
+    border-color: var(--facebook-color);
+    background-color: white;
+}
+
+.social-btn-facebook:hover {
+    background-color: var(--facebook-color);
+    color: white;
+    border-color: var(--facebook-color);
+}
+
+/* Divider */
+.divider {
+    text-align: center;
+    margin: 1.5rem 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #dee2e6;
+}
+
+.divider span {
+    background: white;
+    padding: 0 1rem;
+    position: relative;
+    color: #6c757d;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
