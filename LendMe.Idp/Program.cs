@@ -7,7 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography.X509Certificates;
 using LendMe.Idp.Infrastructure.Persistance.Context;
 using LendMe.Idp.Infrastructure.Persistance.Entity;
-using OpenIddict.Validation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,7 +42,6 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
-//.AddDefaultUI();
 
 // Configure OpenIddict 6.x
 builder.Services.AddOpenIddict()
@@ -57,22 +55,20 @@ builder.Services.AddOpenIddict()
     })
     .AddServer(options =>
     {
-        // Enable the authorization, device, introspection, logout, token, userinfo and verification endpoints
+        // Enable only the essential endpoints for OAuth 2.1
         options.SetAuthorizationEndpointUris("connect/authorize")
-               .SetDeviceEndpointUris("connect/device")
-               .SetIntrospectionEndpointUris("connect/introspect")
-               .SetLogoutEndpointUris("connect/logout")
                .SetTokenEndpointUris("connect/token")
-               .SetUserinfoEndpointUris("connect/userinfo")
-               .SetVerificationEndpointUris("connect/verify")
+               .SetIntrospectionEndpointUris("connect/introspect")
                .SetRevocationEndpointUris("connect/revoke");
+               // Удалены в OpenIddict 6.0:
+               // .SetLogoutEndpointUris("connect/logout")
+               // .SetUserinfoEndpointUris("connect/userinfo") 
+               // .SetVerificationEndpointUris("connect/verify")
 
-        // Enable the flows
+        // Enable the flows (OAuth 2.1 compliant)
         options.AllowAuthorizationCodeFlow()
-               .RequireProofKeyForCodeExchange() // Enforce PKCE
+               .RequireProofKeyForCodeExchange() // Обязательно в OAuth 2.1
                .AllowClientCredentialsFlow()
-               .AllowDeviceCodeFlow()
-               .AllowPasswordFlow()
                .AllowRefreshTokenFlow();
 
         // Register the signing and encryption credentials
@@ -90,9 +86,6 @@ builder.Services.AddOpenIddict()
 
         // Configure token formats
         // JWT is the default format for access tokens in OpenIddict 6.x
-        // To use reference tokens instead, you would use:
-        // options.UseReferenceAccessTokens();
-        
         // Optional: disable encryption for easier debugging in development
         if (builder.Environment.IsDevelopment())
         {
@@ -138,26 +131,25 @@ builder.Services.AddOpenIddict()
         // Register the ASP.NET Core host and configure options
         options.UseAspNetCore()
                .EnableAuthorizationEndpointPassthrough()
-               .EnableLogoutEndpointPassthrough()
-               .EnableStatusCodePagesIntegration()
                .EnableTokenEndpointPassthrough()
-               .EnableUserinfoEndpointPassthrough()
-               .EnableVerificationEndpointPassthrough();
+               .EnableStatusCodePagesIntegration();
+               // Удалены в OpenIddict 6.0:
+               // .EnableLogoutEndpointPassthrough()
+               // .EnableUserinfoEndpointPassthrough()
+               // .EnableVerificationEndpointPassthrough()
                
         // Configure HTTPS requirement
         if (builder.Environment.IsDevelopment())
         {
-            
-            //options.DisableTransportSecurityRequirement();
+            // В разработке можно отключить требование HTTPS
+            // options.DisableTransportSecurityRequirement();
         }
 
-        // Configure token lifetimes
-        options.SetAccessTokenLifetime(TimeSpan.FromMinutes(30))
-               .SetIdentityTokenLifetime(TimeSpan.FromMinutes(30))
-               .SetRefreshTokenLifetime(TimeSpan.FromDays(14))
-               .SetAuthorizationCodeLifetime(TimeSpan.FromMinutes(5))
-               .SetDeviceCodeLifetime(TimeSpan.FromMinutes(10))
-               .SetUserCodeLifetime(TimeSpan.FromMinutes(10));
+        // Configure token lifetimes (OAuth 2.1 рекомендации)
+        options.SetAccessTokenLifetime(TimeSpan.FromMinutes(15))
+               .SetIdentityTokenLifetime(TimeSpan.FromMinutes(15))
+               .SetRefreshTokenLifetime(TimeSpan.FromDays(7))
+               .SetAuthorizationCodeLifetime(TimeSpan.FromMinutes(5));
     })
     .AddValidation(options =>
     {
@@ -171,7 +163,7 @@ builder.Services.AddOpenIddict()
         options.EnableAuthorizationEntryValidation();
     });
 
-// Configure authentication
+// Configure authentication (OAuth 2.1 compliant)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -183,11 +175,24 @@ builder.Services.AddAuthentication(options =>
     options.LogoutPath = "/Account/Logout";
     options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
     options.SlidingExpiration = true;
+    
+    // Настройки cookie для .NET 9
+    options.Cookie.Name = "AuthCookie";
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+    options.Cookie.HttpOnly = true; // Защита от XSS
+    options.Cookie.IsEssential = true; // Обход GDPR для essential cookies
+    
+    // Дополнительные настройки безопасности
+    if (builder.Environment.IsProduction())
+    {
+        options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+        options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
+    }
+
 })
 .AddGoogle(options =>
 {
-    // Configure Google authentication
-    // Get credentials from https://console.developers.google.com
     options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? "your-google-client-id";
     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "your-google-client-secret";
     options.Scope.Add("profile");
@@ -202,8 +207,6 @@ builder.Services.AddAuthentication(options =>
 })
 .AddFacebook(options =>
 {
-    // Configure Facebook authentication
-    // Get credentials from https://developers.facebook.com
     options.AppId = builder.Configuration["Authentication:Facebook:AppId"] ?? "your-facebook-app-id";
     options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"] ?? "your-facebook-app-secret";
     options.Scope.Add("email");
@@ -229,17 +232,30 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser();
         policy.RequireClaim("scope", "api");
     });
+    
+    options.AddPolicy("ReadPolicy", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireClaim("scope", "api:read");
+    });
+    
+    options.AddPolicy("WritePolicy", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireClaim("scope", "api:write");
+    });
 });
 
 // Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowSpecificOrigins", policy =>
     {
         policy.WithOrigins("https://localhost:5001", "https://localhost:7001")
                .AllowAnyMethod()
                .AllowAnyHeader()
-               .AllowCredentials();
+               .AllowCredentials()
+               .SetIsOriginAllowedToAllowWildcardSubdomains();
     });
 });
 
@@ -258,7 +274,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseCors("AllowAll");
+app.UseCors("AllowSpecificOrigins");
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -283,18 +299,15 @@ static async Task HandleExternalLogin(Microsoft.AspNetCore.Authentication.OAuth.
     var user = await userManager.FindByEmailAsync(email);
     if (user == null)
     {
-        // Extract name information
         var firstName = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value;
         var lastName = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Surname)?.Value;
         
-        // For Facebook, try alternative claim names
         if (provider == "Facebook")
         {
             firstName = firstName ?? context.Principal?.FindFirst("first_name")?.Value;
             lastName = lastName ?? context.Principal?.FindFirst("last_name")?.Value;
         }
         
-        // If names are still null, try to split the full name
         if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
         {
             var fullName = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;

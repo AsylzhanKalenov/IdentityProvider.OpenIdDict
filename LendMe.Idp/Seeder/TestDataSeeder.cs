@@ -45,7 +45,7 @@ public class TestDataSeeder : IHostedService
                 Permissions =
                 {
                     OpenIddictConstants.Permissions.Endpoints.Authorization,
-                    OpenIddictConstants.Permissions.Endpoints.Logout,
+                    //OpenIddictConstants.Permissions.Endpoints.Logout,
                     OpenIddictConstants.Permissions.Endpoints.Token,
                     OpenIddictConstants.Permissions.Endpoints.Revocation,
                     OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
@@ -79,7 +79,7 @@ public class TestDataSeeder : IHostedService
                 Permissions =
                 {
                     OpenIddictConstants.Permissions.Endpoints.Authorization,
-                    OpenIddictConstants.Permissions.Endpoints.Logout,
+                    //OpenIddictConstants.Permissions.Endpoints.Logout,
                     OpenIddictConstants.Permissions.Endpoints.Token,
                     OpenIddictConstants.Permissions.Endpoints.Introspection,
                     OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
