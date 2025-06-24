@@ -1,0 +1,56 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+<h1>OAuth 2.0 Test</h1>
+<button onclick="startAuth()">Start Authorization</button>
+    
+<script>
+    async function startAuth() {
+        // Генерируем PKCE параметры
+        const codeVerifier = generateCodeVerifier();
+        const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+        // Сохраняем code_verifier на сервере через AJAX
+        await fetch('/Home/SaveCodeVerifier', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ codeVerifier: codeVerifier })
+        });
+
+        const params = new URLSearchParams({
+            client_id: 'spa-client',
+            response_type: 'code',
+            redirect_uri: 'https://localhost:7255/callback',
+            scope: 'email profile api',
+            state: 'test123',
+            code_challenge: codeChallenge,
+            code_challenge_method: 'S256'
+        });
+
+        window.location.href = `https://localhost:7066/connect/authorize?${params}`;
+    }
+
+
+    function generateCodeVerifier() {
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        return btoa(String.fromCharCode(...array))
+            .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    }
+    
+    async function generateCodeChallenge(codeVerifier) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(codeVerifier);
+        const digest = await crypto.subtle.digest('SHA-256', data);
+        return btoa(String.fromCharCode(...new Uint8Array(digest)))
+            .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    }
+</script>

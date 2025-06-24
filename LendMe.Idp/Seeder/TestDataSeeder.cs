@@ -40,8 +40,14 @@ public class TestDataSeeder : IHostedService
                 ClientId = "spa-client",
                 ClientType = OpenIddictConstants.ClientTypes.Public,
                 DisplayName = "SPA Client Application",
-                RedirectUris = { new Uri("https://localhost:5001/callback") },
-                PostLogoutRedirectUris = { new Uri("https://localhost:5001/") },
+                RedirectUris = { 
+                    new Uri("https://localhost:7255/callback"),  // Обновленный порт
+                    new Uri("https://localhost:5001/callback")
+                },
+                PostLogoutRedirectUris = { 
+                    new Uri("https://localhost:7255/"),
+                    new Uri("https://localhost:5001/") 
+                },
                 Permissions =
                 {
                     OpenIddictConstants.Permissions.Endpoints.Authorization,

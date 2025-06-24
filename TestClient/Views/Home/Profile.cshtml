@@ -1,0 +1,54 @@
+@model TestClient.Controllers.UserInfo
+
+@{
+    ViewData["Title"] = "User Profile";
+}
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h5>👤 User Profile</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col-md-3"><strong>Subject (ID):</strong></div>
+                <div class="col-md-9">@Model.Subject</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3"><strong>Email:</strong></div>
+                <div class="col-md-9">@Model.Email</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3"><strong>Full Name:</strong></div>
+                <div class="col-md-9">@Model.Name</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3"><strong>First Name:</strong></div>
+                <div class="col-md-9">@Model.GivenName</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3"><strong>Last Name:</strong></div>
+                <div class="col-md-9">@Model.FamilyName</div>
+            </div>
+            @if (Model.Roles.Any())
+            {
+                <div class="row mb-2">
+                    <div class="col-md-3"><strong>Roles:</strong></div>
+                    <div class="col-md-9">
+                        @foreach (var role in Model.Roles)
+                        {
+                            <span class="badge bg-primary me-1">@role</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="@Url.Action("Index")" class="btn btn-secondary">Back to Home</a>
+        <form method="post" action="@Url.Action("Logout")" class="d-inline">
+            <button type="submit" class="btn btn-outline-danger">Logout</button>
+        </form>
+    </div>
+</div>

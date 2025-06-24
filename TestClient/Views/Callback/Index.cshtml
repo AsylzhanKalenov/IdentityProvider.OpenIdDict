@@ -1,0 +1,48 @@
+
+<h1>Authorization Code Received!</h1>
+<div id="result"></div>
+
+<script>
+    // Извлекаем параметры из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    const error = urlParams.get('error');
+    
+    const resultDiv = document.getElementById('result');
+    
+    if (error) {
+        resultDiv.innerHTML = `<p style="color: red;">Error: ${error}</p>`;
+    } else if (code) {
+        resultDiv.innerHTML = `
+            <p><strong>Authorization Code:</strong> ${code}</p>
+            <p><strong>State:</strong> ${state}</p>
+            <button onclick="exchangeCodeForToken()">Exchange for Token</button>
+        `;
+    } else {
+        resultDiv.innerHTML = '<p>No authorization code received</p>';
+    }
+    
+    async function exchangeCodeForToken() {
+        try {
+            const response = await fetch('https://localhost:7066/connect/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    grant_type: 'authorization_code',
+                    client_id: 'spa-client',
+                    code: code,
+                    redirect_uri: 'https://localhost:7255/callback',
+                    code_verifier: 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk' // Используйте тот же, что генерировали для code_challenge
+                })
+            });
+            
+            const data = await response.json();
+            resultDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        } catch (error) {
+            resultDiv.innerHTML += `<p style="color: red;">Token exchange error: ${error}</p>`;
+        }
+    }
+</script>

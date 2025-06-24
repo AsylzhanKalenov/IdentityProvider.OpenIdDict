@@ -42,14 +42,23 @@
             var request = HttpContext.GetOpenIddictServerRequest() ??
                 throw new InvalidOperationException("The OpenID Connect request cannot be retrieved.");
 
+            // Добавьте отладочную информацию
+            var cookies = HttpContext.Request.Cookies;
+            Console.WriteLine($"Cookies count: {cookies.Count}");
+            foreach (var cookie in cookies)
+            {
+                Console.WriteLine($"Cookie: {cookie.Key} = {cookie.Value}");
+            }
+
+            
             // Retrieve the user principal stored in the authentication cookie
-            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            var result = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
 
             // If the user principal can't be extracted, redirect the user to the login page
             if (!result.Succeeded)
             {
                 return Challenge(
-                    authenticationSchemes: CookieAuthenticationDefaults.AuthenticationScheme,
+                    authenticationSchemes: IdentityConstants.ApplicationScheme,
                     properties: new AuthenticationProperties
                     {
                         RedirectUri = Request.PathBase + Request.Path + QueryString.Create(
@@ -61,7 +70,7 @@
             if (user == null || !user.IsActive)
             {
                 return Challenge(
-                    authenticationSchemes: CookieAuthenticationDefaults.AuthenticationScheme,
+                    authenticationSchemes: IdentityConstants.ApplicationScheme,
                     properties: new AuthenticationProperties
                     {
                         RedirectUri = Request.PathBase + Request.Path + QueryString.Create(

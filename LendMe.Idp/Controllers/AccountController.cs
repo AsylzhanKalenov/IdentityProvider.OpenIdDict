@@ -2,6 +2,7 @@ using System.Security.Claims;
 using LendMe.Idp.Infrastructure.Persistance.Entity;
 using LendMe.Idp.Models;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -49,6 +50,11 @@ public class AccountController : Controller
                     _logger.LogInformation("User logged in.");
                     user.LastLoginAt = DateTime.UtcNow;
                     await _userManager.UpdateAsync(user);
+                    
+                    // Добавьте проверку аутентификации сразу после логина
+                    var authResult = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+                    _logger.LogInformation($"After login authentication check: {authResult.Succeeded}");
+
                     
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     {

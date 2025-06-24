@@ -1,0 +1,64 @@
+@model TestClient.Controllers.TokenResponse
+
+@{
+    ViewData["Title"] = "Authorization Successful";
+}
+
+<div class="container mt-4">
+    <div class="alert alert-success">
+        <h4>✅ Authorization Successful!</h4>
+        <p>You have successfully authorized the application.</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Token Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3"><strong>Token Type:</strong></div>
+                <div class="col-md-9">@Model.TokenType</div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-3"><strong>Expires In:</strong></div>
+                <div class="col-md-9">@Model.ExpiresIn seconds</div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-3"><strong>Scope:</strong></div>
+                <div class="col-md-9">@Model.Scope</div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-3"><strong>Access Token:</strong></div>
+                <div class="col-md-9">
+                    <textarea class="form-control" rows="3" readonly>@Model.AccessToken</textarea>
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.RefreshToken))
+            {
+                <div class="row mt-2">
+                    <div class="col-md-3"><strong>Refresh Token:</strong></div>
+                    <div class="col-md-9">
+                        <textarea class="form-control" rows="2" readonly>@Model.RefreshToken</textarea>
+                    </div>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.IdToken))
+            {
+                <div class="row mt-2">
+                    <div class="col-md-3"><strong>ID Token:</strong></div>
+                    <div class="col-md-9">
+                        <textarea class="form-control" rows="3" readonly>@Model.IdToken</textarea>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="@Url.Action("Profile")" class="btn btn-primary">View Profile</a>
+        <a href="@Url.Action("Index")" class="btn btn-secondary">Back to Home</a>
+        <form method="post" action="@Url.Action("Logout")" class="d-inline">
+            <button type="submit" class="btn btn-outline-danger">Logout</button>
+        </form>
+    </div>
+</div>
