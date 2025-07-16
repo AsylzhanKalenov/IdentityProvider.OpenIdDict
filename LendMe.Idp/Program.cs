@@ -276,6 +276,30 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("AllowSpecificOrigins");
 
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/connect/token"))
+    {
+        Console.WriteLine($"=== TOKEN REQUEST INTERCEPTED ===");
+        Console.WriteLine($"Method: {context.Request.Method}");
+        Console.WriteLine($"Path: {context.Request.Path}");
+        Console.WriteLine($"ContentType: {context.Request.ContentType}");
+        
+        // Читаем body только если это form data
+        if (context.Request.HasFormContentType)
+        {
+            var form = await context.Request.ReadFormAsync();
+            foreach (var pair in form)
+            {
+                Console.WriteLine($"Form param: {pair.Key} = {pair.Value}");
+            }
+        }
+    }
+    
+    await next();
+});
+
+
 app.UseAuthentication();
 app.UseAuthorization();
 

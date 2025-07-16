@@ -41,6 +41,15 @@
         {
             var request = HttpContext.GetOpenIddictServerRequest() ??
                 throw new InvalidOperationException("The OpenID Connect request cannot be retrieved.");
+            
+            // Добавьте отладочную информацию для PKCE
+            Console.WriteLine($"=== AUTHORIZATION REQUEST ===");
+            Console.WriteLine($"Method: {HttpContext.Request.Method}");
+            Console.WriteLine($"ClientId: {request.ClientId}");
+            Console.WriteLine($"CodeChallenge: {request.CodeChallenge}");
+            Console.WriteLine($"CodeChallengeMethod: {request.CodeChallengeMethod}");
+            Console.WriteLine($"HasCodeChallenge: {!string.IsNullOrEmpty(request.CodeChallenge)}");
+
 
             // Добавьте отладочную информацию
             var cookies = HttpContext.Request.Cookies;
@@ -77,6 +86,73 @@
                             Request.HasFormContentType ? Request.Form.ToList() : Request.Query.ToList())
                     });
             }
+            
+            // Обработка POST-запроса от формы согласия
+            if (HttpContext.Request.Method == "POST")
+            {
+                // Проверяем, что пользователь нажал на форме
+                var submit = Request.Form["submit"].ToString();
+                
+                if (submit == "Deny")
+                {
+                    // Пользователь отклонил доступ
+                    return Forbid(
+                        authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+                        properties: new AuthenticationProperties(new Dictionary<string, string>
+                        {
+                            [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants.Errors.AccessDenied,
+                            [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The authorization was denied by the user"
+                        }));
+                }
+
+                // Если пользователь согласился ("Accept"), создаем авторизацию
+                if (submit == "Accept")
+                {
+                    // Создаем identity для токенов
+                    var identity1 = new ClaimsIdentity(
+                        authenticationType: TokenValidationParameters.DefaultAuthenticationType,
+                        nameType: OpenIddictConstants.Claims.Name,
+                        roleType: OpenIddictConstants.Claims.Role);
+
+                    // Добавляем claims
+                    identity1.SetClaim(OpenIddictConstants.Claims.Subject, await _userManager.GetUserIdAsync(user))
+                            .SetClaim(OpenIddictConstants.Claims.Email, await _userManager.GetEmailAsync(user))
+                            .SetClaim(OpenIddictConstants.Claims.EmailVerified, user.EmailConfirmed.ToString().ToLower())
+                            .SetClaim(OpenIddictConstants.Claims.Name, $"{user.FirstName} {user.LastName}")
+                            .SetClaim(OpenIddictConstants.Claims.GivenName, user.FirstName)
+                            .SetClaim(OpenIddictConstants.Claims.FamilyName, user.LastName)
+                            .SetClaim(OpenIddictConstants.Claims.PreferredUsername, user.UserName)
+                            .SetClaim(OpenIddictConstants.Claims.UpdatedAt, new DateTimeOffset(user.UpdatedAt).ToUnixTimeSeconds().ToString());
+
+                    // Добавляем остальные claims как в основном коде...
+                    // [Здесь добавьте весь код для optional claims, phone, roles, external provider claims]
+
+                    // Set scopes and resources
+                    identity1.SetScopes(request.GetScopes());
+                    identity1.SetResources(await _scopeManager.ListResourcesAsync(identity1.GetScopes()).ToListAsync());
+
+                    // Создаем permanent authorization после согласия пользователя
+                    var application1 = await _applicationManager.FindByClientIdAsync(request.ClientId) ??
+                        throw new InvalidOperationException("The application cannot be found.");
+
+                    var authorization = await _authorizationManager.CreateAsync(
+                        identity: identity1,
+                        subject: identity1.GetClaim(OpenIddictConstants.Claims.Subject),
+                        client: request.ClientId,
+                        type: OpenIddictConstants.AuthorizationTypes.Permanent,
+                        scopes: identity1.GetScopes());
+
+                    identity1.SetAuthorizationId(await _authorizationManager.GetIdAsync(authorization));
+                    identity1.SetDestinations(GetDestinations);
+
+                    // Update last login
+                    user.LastLoginAt = DateTime.UtcNow;
+                    await _userManager.UpdateAsync(user);
+
+                    return SignIn(new ClaimsPrincipal(identity1), OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+                }
+            }
+
 
             // Create the claims-based identity that will be used by OpenIddict to generate tokens
             var identity = new ClaimsIdentity(
@@ -148,7 +224,7 @@
             identity.SetResources(await _scopeManager.ListResourcesAsync(identity.GetScopes()).ToListAsync());
 
             // Check if consent is required
-            var application = await _applicationManager.FindByIdAsync(request.ClientId) ??
+            var application = await _applicationManager.FindByClientIdAsync(request.ClientId) ??
                 throw new InvalidOperationException("The application cannot be found.");
 
             var consentType = await _applicationManager.GetConsentTypeAsync(application);
@@ -203,11 +279,24 @@
             return SignIn(new ClaimsPrincipal(identity), OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
         }
 
-        [HttpPost("~/connect/token")]
+        [HttpPost("~/connect/token"), IgnoreAntiforgeryToken, Produces("application/json")]
         public async Task<IActionResult> Exchange()
         {
             var request = HttpContext.GetOpenIddictServerRequest() ??
                 throw new InvalidOperationException("The OpenID Connect request cannot be retrieved.");
+            
+            Console.WriteLine($"=== TOKEN REQUEST ===");
+            Console.WriteLine($"GrantType: {request.GrantType}");
+            Console.WriteLine($"ClientId: {request.ClientId}");
+            Console.WriteLine($"Code: {request.Code}");
+            Console.WriteLine($"CodeVerifier: {request.CodeVerifier}");
+            Console.WriteLine($"HasCodeVerifier: {!string.IsNullOrEmpty(request.CodeVerifier)}");
+            
+            // Проверяем все параметры запроса
+            foreach (var param in request.GetParameters())
+            {
+                Console.WriteLine($"Token Param: {param.Key} = {param.Value}");
+            }
 
             ClaimsPrincipal claimsPrincipal;
 

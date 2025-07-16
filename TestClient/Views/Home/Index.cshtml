@@ -29,7 +29,7 @@
             client_id: 'spa-client',
             response_type: 'code',
             redirect_uri: 'https://localhost:7255/callback',
-            scope: 'email profile api',
+            scope: 'openid email profile api',
             state: 'test123',
             code_challenge: codeChallenge,
             code_challenge_method: 'S256'
@@ -37,7 +37,6 @@
 
         window.location.href = `https://localhost:7066/connect/authorize?${params}`;
     }
-
 
     function generateCodeVerifier() {
         const array = new Uint8Array(32);
