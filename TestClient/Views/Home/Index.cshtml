@@ -17,7 +17,7 @@
         const codeChallenge = await generateCodeChallenge(codeVerifier);
 
         // Сохраняем code_verifier на сервере через AJAX
-        await fetch('/Home/SaveCodeVerifier', {
+        await fetch('/SaveCodeVerifier', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
