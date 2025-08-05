@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace LendMe.Idp.Controllers;
 
@@ -41,7 +42,7 @@ public class AccountController : Controller
         ViewData["ReturnUrl"] = returnUrl;
         if (ModelState.IsValid)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.PhoneNumber == model.PhoneNumber);
             if (user != null)
             {
                 var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, lockoutOnFailure: false);
@@ -91,7 +92,9 @@ public class AccountController : Controller
                 Email = model.Email,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
-                EmailConfirmed = true // For demo purposes
+                PhoneNumber = model.PhoneNumber,
+                EmailConfirmed = true, // For demo purposes
+                PhoneNumberConfirmed = true, // For demo purposes
             };
             
             var result = await _userManager.CreateAsync(user, model.Password);

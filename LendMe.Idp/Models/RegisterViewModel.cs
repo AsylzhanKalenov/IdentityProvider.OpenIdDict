@@ -27,4 +27,8 @@ public class RegisterViewModel
     [Required]
     [Display(Name = "Last Name")]
     public string LastName { get; set; }
+    [Required]
+    [KazakhPhoneNumber]
+    [Display(Name = "Phone number")]
+    public string PhoneNumber { get; set; }
 }
