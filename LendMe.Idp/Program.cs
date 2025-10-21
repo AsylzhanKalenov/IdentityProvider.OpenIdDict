@@ -18,8 +18,11 @@ builder.Services.AddRazorPages();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     // Use in-memory database for demo purposes
-    options.UseInMemoryDatabase("IdentityProviderDb");
+    //options.UseInMemoryDatabase("IdentityProviderDb");
     
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseSqlServer(connectionString);
+    //options.UseNpgsql(connectionString);
     // Register the OpenIddict entity framework stores
     options.UseOpenIddict();
 });
@@ -288,11 +291,17 @@ app.Use(async (context, next) =>
         // Читаем body только если это form data
         if (context.Request.HasFormContentType)
         {
+            // Включаем буферизацию для возможности повторного чтения
+            context.Request.EnableBuffering();
+            
             var form = await context.Request.ReadFormAsync();
             foreach (var pair in form)
             {
                 Console.WriteLine($"Form param: {pair.Key} = {pair.Value}");
             }
+            // ВАЖНО: Сбрасываем позицию потока в начало для повторного чтения
+            context.Request.Body.Position = 0;
+
         }
     }
     
@@ -307,6 +316,16 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+
+app.MapGet("/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
+{
+    var endpoints = endpointSources.SelectMany(es => es.Endpoints);
+    return endpoints.Select(e => new {
+        DisplayName = e.DisplayName,
+        RoutePattern = (e as RouteEndpoint)?.RoutePattern?.RawText
+    });
+});
+
 
 app.Run();
 

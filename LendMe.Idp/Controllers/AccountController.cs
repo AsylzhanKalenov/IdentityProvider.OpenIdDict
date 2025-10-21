@@ -2,7 +2,6 @@ using System.Security.Claims;
 using LendMe.Idp.Infrastructure.Persistance.Entity;
 using LendMe.Idp.Models;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -80,7 +79,7 @@ public class AccountController : Controller
 
     [HttpPost]
     [AllowAnonymous]
-    [ValidateAntiForgeryToken]
+    [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model, string returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
